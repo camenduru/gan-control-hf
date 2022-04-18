@@ -1,0 +1,3 @@
+[submodule "gan-control"]
+	path = gan-control
+	url = https://github.com/amazon-research/gan-control
