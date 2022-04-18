@@ -131,9 +131,9 @@ def main():
                 0, 255, step=1, default=158, label='Hair Color (G)'),
             gr.inputs.Slider(
                 0, 255, step=1, default=92, label='Hair Color (B)'),
-            gr.inputs.Slider(1, 10, step=1, default=1, label='Number of Rows'),
+            gr.inputs.Slider(1, 3, step=1, default=1, label='Number of Rows'),
             gr.inputs.Slider(
-                1, 10, step=1, default=5, label='Number of Columns'),
+                1, 5, step=1, default=5, label='Number of Columns'),
         ],
         [
             gr.outputs.Image(type='pil', label='Generated Image'),
