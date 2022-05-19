@@ -24,8 +24,11 @@ sys.path.insert(0, 'gan-control/src')
 from gan_control.inference.controller import Controller
 
 TITLE = 'amazon-research/gan-control'
-DESCRIPTION = 'This is a demo for https://github.com/amazon-research/gan-control.'
-ARTICLE = None
+DESCRIPTION = '''This is an unofficial demo for https://github.com/amazon-research/gan-control.
+
+Expected execution time on Hugging Face Spaces: 7s (for one image)
+'''
+ARTICLE = '<center><img src="https://visitor-badge.glitch.me/badge?page_id=hysts.gan-control" alt="visitor badge"/></center>'
 
 TOKEN = os.environ['TOKEN']
 
