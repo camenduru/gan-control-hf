@@ -17,7 +17,8 @@ import PIL.Image
 import torch
 
 if os.getenv('SYSTEM') == 'spaces':
-    subprocess.run('git apply ../patch'.split(), cwd='gan-control')
+    with open('patch') as f:
+        subprocess.run('patch -p1'.split(), cwd='gan-control', stdin=f)
 
 sys.path.insert(0, 'gan-control/src')
 
