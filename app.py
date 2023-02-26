@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import argparse
 import functools
 import os
 import pathlib
@@ -24,28 +23,12 @@ sys.path.insert(0, 'gan-control/src')
 
 from gan_control.inference.controller import Controller
 
-TITLE = 'amazon-research/gan-control'
-DESCRIPTION = '''This is an unofficial demo for https://github.com/amazon-research/gan-control.
+DESCRIPTION = '''GAN-Control
 
-Expected execution time on Hugging Face Spaces: 7s (for one image)
+This is an unofficial demo for https://github.com/amazon-research/gan-control.
 '''
-ARTICLE = '<center><img src="https://visitor-badge.glitch.me/badge?page_id=hysts.gan-control" alt="visitor badge"/></center>'
 
-TOKEN = os.environ['TOKEN']
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--device', type=str, default='cpu')
-    parser.add_argument('--theme', type=str)
-    parser.add_argument('--live', action='store_true')
-    parser.add_argument('--share', action='store_true')
-    parser.add_argument('--port', type=int)
-    parser.add_argument('--disable-queue',
-                        dest='enable_queue',
-                        action='store_false')
-    parser.add_argument('--allow-flagging', type=str, default='never')
-    return parser.parse_args()
+TOKEN = os.getenv('HF_TOKEN')
 
 
 def download_models() -> None:
@@ -108,54 +91,56 @@ def run(
     return res0, res1, res2, res3
 
 
-def main():
-    args = parse_args()
-    device = torch.device(args.device)
+download_models()
 
-    download_models()
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+path = 'controller_age015id025exp02hai04ori02gam15/'
+controller = Controller(path, device)
+func = functools.partial(run, controller=controller, device=device)
 
-    path = 'controller_age015id025exp02hai04ori02gam15/'
-    controller = Controller(path, device)
-
-    func = functools.partial(run, controller=controller, device=device)
-    func = functools.update_wrapper(func, run)
-
-    gr.Interface(
-        func,
-        [
-            gr.inputs.Number(default=0, label='Seed'),
-            gr.inputs.Slider(0, 1, step=0.1, default=0.7, label='Truncation'),
-            gr.inputs.Slider(-90, 90, step=1, default=30, label='Yaw'),
-            gr.inputs.Slider(-90, 90, step=1, default=0, label='Pitch'),
-            gr.inputs.Slider(15, 75, step=1, default=75, label='Age'),
-            gr.inputs.Slider(
-                0, 255, step=1, default=186, label='Hair Color (R)'),
-            gr.inputs.Slider(
-                0, 255, step=1, default=158, label='Hair Color (G)'),
-            gr.inputs.Slider(
-                0, 255, step=1, default=92, label='Hair Color (B)'),
-            gr.inputs.Slider(1, 3, step=1, default=1, label='Number of Rows'),
-            gr.inputs.Slider(
-                1, 5, step=1, default=5, label='Number of Columns'),
-        ],
-        [
-            gr.outputs.Image(type='pil', label='Generated Image'),
-            gr.outputs.Image(type='pil', label='Head Pose Controlled'),
-            gr.outputs.Image(type='pil', label='Age Controlled'),
-            gr.outputs.Image(type='pil', label='Hair Color Controlled'),
-        ],
-        title=TITLE,
-        description=DESCRIPTION,
-        article=ARTICLE,
-        theme=args.theme,
-        allow_flagging=args.allow_flagging,
-        live=args.live,
-    ).launch(
-        enable_queue=args.enable_queue,
-        server_port=args.port,
-        share=args.share,
-    )
-
-
-if __name__ == '__main__':
-    main()
+gr.Interface(
+    fn=func,
+    inputs=[
+        gr.Slider(label='Seed', minimum=0, maximum=1000000, step=1, value=0),
+        gr.Slider(label='Truncation',
+                  minimum=0,
+                  maximum=1,
+                  step=0.1,
+                  value=0.7),
+        gr.Slider(label='Yaw', minimum=-90, maximum=90, step=1, value=30),
+        gr.Slider(label='Pitch', minimum=-90, maximum=90, step=1, value=0),
+        gr.Slider(label='Age', minimum=15, maximum=75, step=1, value=75),
+        gr.Slider(label='Hair Color (R)',
+                  minimum=0,
+                  maximum=255,
+                  step=1,
+                  value=186),
+        gr.Slider(label='Hair Color (G)',
+                  minimum=0,
+                  maximum=255,
+                  step=1,
+                  value=158),
+        gr.Slider(label='Hair Color (B)',
+                  minimum=0,
+                  maximum=255,
+                  step=1,
+                  value=92),
+        gr.Slider(label='Number of Rows',
+                  minimum=1,
+                  maximum=3,
+                  step=1,
+                  value=1),
+        gr.Slider(label='Number of Columns',
+                  minimum=1,
+                  maximum=5,
+                  step=1,
+                  value=5),
+    ],
+    outputs=[
+        gr.Image(label='Generated Image', type='pil'),
+        gr.Image(label='Head Pose Controlled', type='pil'),
+        gr.Image(label='Age Controlled', type='pil'),
+        gr.Image(label='Hair Color Controlled', type='pil'),
+    ],
+    description=DESCRIPTION,
+).queue().launch(show_api=False)
