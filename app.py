@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 import os
 import pathlib
+import shlex
 import subprocess
 import sys
 import tarfile
@@ -17,27 +18,22 @@ import torch
 
 if os.getenv('SYSTEM') == 'spaces':
     with open('patch') as f:
-        subprocess.run('patch -p1'.split(), cwd='gan-control', stdin=f)
+        subprocess.run(shlex.split('patch -p1'), cwd='gan-control', stdin=f)
 
 sys.path.insert(0, 'gan-control/src')
 
 from gan_control.inference.controller import Controller
 
-DESCRIPTION = '''GAN-Control
-
-This is an unofficial demo for https://github.com/amazon-research/gan-control.
-'''
-
-TOKEN = os.getenv('HF_TOKEN')
+TITLE = 'GAN-Control'
+DESCRIPTION = 'https://github.com/amazon-research/gan-control'
 
 
 def download_models() -> None:
     model_dir = pathlib.Path('controller_age015id025exp02hai04ori02gam15')
     if not model_dir.exists():
         path = huggingface_hub.hf_hub_download(
-            'hysts/gan-control',
-            'controller_age015id025exp02hai04ori02gam15.tar.gz',
-            use_auth_token=TOKEN)
+            'public-data/gan-control',
+            'controller_age015id025exp02hai04ori02gam15.tar.gz')
         with tarfile.open(path) as f:
             f.extractall()
 
@@ -96,10 +92,10 @@ download_models()
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 path = 'controller_age015id025exp02hai04ori02gam15/'
 controller = Controller(path, device)
-func = functools.partial(run, controller=controller, device=device)
+fn = functools.partial(run, controller=controller, device=device)
 
 gr.Interface(
-    fn=func,
+    fn=fn,
     inputs=[
         gr.Slider(label='Seed', minimum=0, maximum=1000000, step=1, value=0),
         gr.Slider(label='Truncation',
@@ -142,5 +138,6 @@ gr.Interface(
         gr.Image(label='Age Controlled', type='pil'),
         gr.Image(label='Hair Color Controlled', type='pil'),
     ],
+    title=TITLE,
     description=DESCRIPTION,
-).queue().launch(show_api=False)
+).queue(max_size=10).launch()
